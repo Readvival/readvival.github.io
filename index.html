@@ -1,0 +1,2735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>AIGEN AI VIDEO GENERATION TUTORIAL</title>
+    
+    <!-- Google Fonts (Montserrat) -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-canvas: #f0f4f8;
+            --paper: #ffffff;
+            --white: #ffffff;
+            --slate: #ffffff;
+            --charcoal: #ffffff;
+            --charcoal-deep: #f8fafc;
+            --accent: #0ea5e9;
+            --accent-rgb: 14, 165, 233;
+            --ink: #1e293b;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --danger: #f43f5e;
+            --admin-green: #10b981;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 84px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-canvas); }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+            border: 2px solid var(--bg-canvas);
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        body {
+            background: var(--bg-canvas);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(var(--accent-rgb), 0.07) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(var(--accent-rgb), 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--ink);
+            font-family: 'Montserrat', sans-serif;
+            padding: 24px 16px;
+            overflow-x: hidden;
+            padding-left: calc(var(--sidebar-collapsed-width) + 24px);
+            transition: padding-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.sidebar-expanded {
+            padding-left: calc(var(--sidebar-width) + 24px);
+        }
+
+        body.lock-scroll {
+            overflow: hidden !important;
+            touch-action: none;
+        }
+
+        /* ===================================================
+           ADMIN-ONLY ELEMENT VISIBILITY
+           =================================================== */
+        .admin-only-block {
+            display: none !important;
+        }
+        body.aigen-admin-unlocked .admin-only-block {
+            display: block !important;
+        }
+
+        .admin-only-flex {
+            display: none !important;
+        }
+        body.aigen-admin-unlocked .admin-only-flex {
+            display: flex !important;
+        }
+
+        .admin-only-inline {
+            display: none !important;
+        }
+        body.aigen-admin-unlocked .admin-only-inline {
+            display: inline-flex !important;
+        }
+
+        /* ===================================================
+           TAB SECTION VISIBILITY & TRANSITION
+           =================================================== */
+        .tab-section {
+            display: none;
+            animation: tabFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .tab-section.active-section {
+            display: block;
+        }
+
+        @keyframes tabFadeIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===================================================
+           DESKTOP SIDEBAR MENU
+           =================================================== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-collapsed-width);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            padding: 24px 14px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 30px rgba(15, 23, 42, 0.05);
+            border-right: 1px solid var(--line);
+            overflow: visible;
+        }
+
+        .sidebar.expanded { width: var(--sidebar-width); }
+
+        .sidebar-inner-scroll {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .sidebar-inner-scroll::-webkit-scrollbar { display: none; }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 6px;
+            margin-bottom: 32px;
+            position: relative;
+            min-height: 36px;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 200px;
+        }
+
+        .sidebar-brand .brand-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 5px rgba(var(--accent-rgb), 0.2), 0 0 14px var(--accent);
+            flex-shrink: 0;
+            margin-left: 14px;
+        }
+
+        .sidebar-brand .brand-text {
+            color: var(--ink);
+            font-size: 1.05rem;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .sidebar.expanded .sidebar-brand .brand-text {
+            opacity: 1;
+            transform: translateX(0);
+            transition-delay: 0.12s;
+        }
+
+        .sidebar-toggle-btn {
+            position: absolute;
+            right: -14px;
+            top: 28px;
+            background: var(--accent);
+            color: var(--white);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 3px solid var(--bg-canvas);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.72rem;
+            box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.4);
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+
+        .sidebar-toggle-btn:hover { transform: scale(1.12); }
+        .sidebar.expanded .sidebar-toggle-btn i { transform: rotate(180deg); }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .nav-links li { width: 100%; }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-radius: 14px;
+            text-decoration: none;
+            color: var(--muted);
+            transition: all 0.28s ease;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .nav-links a i {
+            font-size: 1.15rem;
+            min-width: 24px;
+            text-align: center;
+            transition: transform 0.25s ease;
+        }
+
+        .nav-links a:hover i { transform: scale(1.12); }
+
+        .nav-links a .link-text {
+            margin-left: 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .sidebar.expanded .nav-links a .link-text {
+            opacity: 1;
+            transform: translateX(0);
+            transition-delay: 0.1s;
+        }
+
+        .nav-links a:hover {
+            background: var(--charcoal-deep);
+            color: var(--ink);
+        }
+
+        .nav-links a.active {
+            background: var(--accent);
+            color: var(--white);
+            box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.32);
+        }
+
+        /* ===================================================
+           MAIN CONTENT AREA & STICKY GLASS HEADER
+           =================================================== */
+        .master-sheet {
+            max-width: 1240px;
+            margin: 0 auto;
+            background: transparent;
+            position: relative;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: var(--ink);
+            padding: 14px 28px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 12px;
+            border-radius: 22px;
+            z-index: 400;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            margin-bottom: 26px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            background: rgba(var(--accent-rgb), 0.12);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.25);
+        }
+
+        .brand-name {
+            font-size: clamp(0.88rem, 1.9vw, 1.08rem);
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .active-tab-pill {
+            background: var(--charcoal-deep);
+            border: 1px solid var(--line);
+            padding: 7px 14px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .admin-lock-btn {
+            background: var(--charcoal-deep);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            padding: 7px 13px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .admin-lock-btn:hover {
+            border-color: var(--accent);
+            color: var(--ink);
+        }
+
+        body.aigen-admin-unlocked .admin-lock-btn {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: var(--admin-green);
+            color: var(--admin-green);
+        }
+
+        /* ===================================================
+           COMMON BUTTONS & BADGES
+           =================================================== */
+        .accent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent);
+            color: var(--white);
+            font-size: 0.71rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 7px 16px;
+            border-radius: 50px;
+            width: fit-content;
+            box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.38);
+            text-transform: uppercase;
+        }
+
+        .btn-submit-accent {
+            background: var(--accent);
+            color: var(--white);
+            border: none;
+            padding: 15px 24px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 10px 24px rgba(var(--accent-rgb), 0.32);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 28px rgba(var(--accent-rgb), 0.42);
+        }
+
+        .btn-admin-upload {
+            background: rgba(var(--accent-rgb), 0.1);
+            color: var(--accent);
+            border: 1.5px dashed var(--accent);
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-admin-upload:hover {
+            background: var(--accent);
+            color: var(--white);
+            border-style: solid;
+        }
+
+        .btn-admin-upload input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-remove-aigen {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-remove-aigen:hover {
+            background: var(--danger);
+            color: var(--white);
+            border-color: var(--danger);
+        }
+
+        /* ===================================================
+           MLBB REQUEST STUDIO & COMPLETED VIDEOS SECTION
+           =================================================== */
+        .mlbb-request-studio, .sec-wrap {
+            background: var(--white);
+            color: var(--ink);
+            border-radius: 30px;
+            padding: 36px 34px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.05);
+            border: 1px solid var(--line);
+            position: relative;
+            margin-bottom: 28px;
+            overflow: hidden;
+        }
+
+        .mlbb-request-studio::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), rgba(var(--accent-rgb), 0.25));
+        }
+
+        .request-top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .mlbb-split {
+            display: grid;
+            grid-template-columns: 1.12fr 0.98fr;
+            gap: 32px;
+            margin-top: 24px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .field-input, .field-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            background: var(--charcoal-deep);
+            border: 1.5px solid var(--line);
+            border-radius: 14px;
+            color: var(--ink);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.83rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .field-textarea {
+            min-height: 110px;
+            resize: vertical;
+            line-height: 1.55;
+        }
+
+        .field-input:focus, .field-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.14);
+            background: var(--white);
+        }
+
+        .upload-duo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .upload-dropzone {
+            background: var(--charcoal-deep);
+            border: 1.5px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-dropzone:hover {
+            border-color: var(--accent);
+            background: rgba(var(--accent-rgb), 0.04);
+            transform: translateY(-2px);
+        }
+
+        .upload-dropzone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .upload-preview-box {
+            margin-top: 10px;
+            display: none;
+            border-radius: 10px;
+            overflow: hidden;
+            max-height: 96px;
+            background: #0f172a;
+            position: relative;
+            border: 1px solid var(--line);
+        }
+
+        .upload-preview-box img, .upload-preview-box video {
+            width: 100%;
+            height: 92px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .req-feed-panel {
+            background: var(--charcoal-deep);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .req-feed-scroll {
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 4px;
+            flex: 1;
+        }
+
+        .req-card-item {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+        }
+
+        .req-card-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .req-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .req-media-attachments {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .req-media-attachments img, .req-media-attachments video {
+            width: 112px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1.5px solid var(--accent);
+            cursor: pointer;
+        }
+
+        .req-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid var(--line);
+        }
+
+        /* Admin Upload Box inside Requested Videos Showcase */
+        .admin-upload-panel {
+            background: rgba(var(--accent-rgb), 0.05);
+            border: 1.5px dashed var(--accent);
+            border-radius: 22px;
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .completed-videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 22px;
+        }
+
+        .completed-video-card {
+            background: var(--charcoal-deep);
+            border: 1.5px solid var(--line);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .completed-video-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        }
+
+        .completed-video-card video {
+            width: 100%;
+            aspect-ratio: 16/10;
+            object-fit: cover;
+            background: #0f172a;
+            display: block;
+        }
+
+        .completed-video-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        /* ===================================================
+           STEP-BY-STEP 7-PHOTO TUTORIALS SECTION
+           =================================================== */
+        .sec-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 26px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .sec-head h2 {
+            font-size: clamp(1.28rem, 2.5vw, 1.7rem);
+            font-weight: 800;
+            color: var(--ink);
+        }
+        .sec-head h2 span { color: var(--accent); }
+        .sec-head p { font-size: 0.81rem; color: var(--muted); margin-top: 5px; }
+
+        .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .filter-btn {
+            background: var(--charcoal-deep);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            padding: 9px 16px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--accent);
+            color: var(--white);
+            border-color: var(--accent);
+            box-shadow: 0 6px 14px rgba(var(--accent-rgb), 0.28);
+        }
+
+        .tutorials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 26px;
+        }
+
+        .tut-card {
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            border: 1.5px solid var(--line);
+            transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tut-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+            border-color: var(--accent);
+        }
+
+        .tut-photo-box {
+            position: relative;
+            height: 235px;
+            background: #0f172a;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tut-photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.35s ease;
+        }
+
+        .empty-media-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            color: #94a3b8;
+            gap: 8px;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+        }
+
+        .empty-media-placeholder i {
+            font-size: 2rem;
+            color: var(--accent);
+            opacity: 0.85;
+        }
+
+        .fullscreen-hint {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.94);
+            color: var(--ink);
+            font-size: 0.66rem;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--line);
+            pointer-events: none;
+            z-index: 3;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tut-photo-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.92) 4%, rgba(15, 23, 42, 0.05) 55%, transparent 100%);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #fff;
+            pointer-events: none;
+        }
+
+        .pill-dark {
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #fff;
+        }
+
+        .step-progress-track {
+            width: 100%;
+            height: 4px;
+            background: var(--line);
+            overflow: hidden;
+        }
+
+        .step-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 14.28%;
+            transition: width 0.3s ease;
+        }
+
+        .slider-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: var(--charcoal-deep);
+            border-bottom: 1px solid var(--line);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .slider-nav-bar button {
+            background: var(--white);
+            border: 1px solid var(--line);
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.69rem;
+            font-weight: 800;
+            color: var(--ink);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .slider-nav-bar button:hover {
+            background: var(--accent);
+            color: var(--white);
+            border-color: var(--accent);
+        }
+
+        .tut-admin-bar {
+            padding: 10px 16px;
+            background: rgba(var(--accent-rgb), 0.06);
+            border-bottom: 1px dashed var(--accent);
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tut-body {
+            padding: 20px 20px 22px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .step-callout-box {
+            background: var(--charcoal-deep);
+            border-left: 3.5px solid var(--accent);
+            padding: 12px 14px;
+            border-radius: 0 12px 12px 0;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+        }
+
+        .thumbs-7 {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .thumb-item {
+            position: relative;
+            height: 38px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--line);
+            background: #0f172a;
+            transition: all 0.2s ease;
+        }
+
+        .thumb-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumb-item span {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            color: #fff;
+            font-size: 0.66rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumb-item.has-photo {
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+
+        .thumb-item.active {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.3);
+        }
+
+        .thumb-item.active span {
+            background: rgba(var(--accent-rgb), 0.85);
+        }
+
+        /* ===================================================
+           SIDE-BY-SIDE VIDEO COMPARISON SECTION
+           =================================================== */
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 22px;
+            margin-top: 22px;
+        }
+
+        .comp-tile {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1.5px solid var(--line);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comp-tile:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.09);
+        }
+
+        .comp-video-stage {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: #0f172a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comp-video-stage video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .comp-tile-body {
+            padding: 18px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .comp-tile-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comp-tile-body h4 {
+            color: var(--ink);
+            font-size: 0.96rem;
+            font-weight: 800;
+        }
+
+        .stars {
+            color: var(--accent);
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            margin: 6px 0 8px;
+        }
+
+        /* ===================================================
+           FOOTER & VISITOR COUNTER
+           =================================================== */
+        footer {
+            padding: 42px 36px 28px;
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 30px;
+            box-shadow: 0 15px 40px rgba(15, 23, 42, 0.04);
+            text-align: center;
+        }
+
+        .footer-btns {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0 30px;
+        }
+
+        .ext-pill {
+            text-decoration: none;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 13px 22px;
+            border-radius: 50px;
+            background: var(--charcoal-deep);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ext-pill.accent {
+            background: var(--accent);
+            color: var(--white);
+            border-color: var(--accent);
+            box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.3);
+        }
+
+        .ext-pill:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
+
+        .visitor-stats-panel {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 24px;
+            margin: 0 auto 28px;
+            max-width: 480px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+            text-align: center;
+        }
+
+        .visitor-stat-box {
+            padding: 16px;
+            background: var(--charcoal-deep);
+            border-radius: 16px;
+            border-top: 4px solid var(--accent);
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        /* ===================================================
+           FULLSCREEN PHOTO MODAL (PC & MOBILE)
+           =================================================== */
+        .fs-modal {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(255, 255, 255, 0.96);
+            z-index: 99999;
+            display: none;
+            grid-template-rows: auto 1fr auto;
+            align-items: center;
+            justify-items: center;
+            padding: 16px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .fs-modal.open { display: grid; }
+
+        .fs-top-bar {
+            width: 100%;
+            max-width: 980px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            color: var(--ink);
+            padding-bottom: 10px;
+        }
+
+        .fs-center-stage {
+            width: 100%;
+            height: 100%;
+            max-width: 980px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .fs-center-stage img {
+            max-width: 94vw;
+            max-height: 68vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 16px;
+            border: 1.5px solid var(--line);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.14);
+            margin: auto;
+            display: block;
+            background: #0f172a;
+        }
+
+        .fs-controls {
+            width: 100%;
+            max-width: 980px;
+            background: var(--white);
+            color: var(--ink);
+            padding: 14px 18px;
+            border-radius: 18px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--line);
+        }
+
+        .fs-nav-btn {
+            background: var(--charcoal-deep);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fs-nav-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .fs-close-btn {
+            background: var(--charcoal-deep);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            padding: 9px 16px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .fs-close-btn:hover {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+
+        .custom-dialog-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .custom-dialog-backdrop.open { display: flex; }
+
+        .custom-dialog-box {
+            background: var(--white);
+            color: var(--ink);
+            width: 100%;
+            max-width: 420px;
+            border-radius: 24px;
+            padding: 26px 24px;
+            border-top: 4px solid var(--accent);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+            text-align: center;
+        }
+
+        .toast-banner {
+            position: fixed;
+            bottom: 96px;
+            right: 22px;
+            background: var(--white);
+            color: var(--ink);
+            border-left: 4px solid var(--accent);
+            padding: 13px 20px;
+            border-radius: 14px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--line);
+            border-left-width: 4px;
+            z-index: 100001;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: 0.3s ease;
+        }
+        .toast-banner.show { opacity: 1; transform: translateY(0); }
+
+        /* ===================================================
+           MOBILE BOTTOM NAVIGATION (FLOATING INDICATOR DESIGN)
+           =================================================== */
+        .mobile-bottom-nav { display: none; }
+
+        @media (max-width: 860px) {
+            .sidebar { display: none !important; }
+
+            body {
+                padding: 12px 10px 105px 10px !important;
+            }
+
+            header {
+                top: 6px;
+                padding: 12px 16px;
+                margin-bottom: 16px;
+                border-radius: 18px;
+            }
+
+            .mlbb-split, .upload-duo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sec-wrap, .mlbb-request-studio, footer {
+                padding: 26px 16px;
+                border-radius: 24px;
+            }
+
+            .fs-controls {
+                flex-wrap: wrap;
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .fs-controls #fs-step-desc {
+                order: -1;
+                flex: 0 0 100%;
+                margin-bottom: 4px;
+                font-size: 0.78rem !important;
+            }
+
+            .fs-controls .fs-nav-btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .mobile-bottom-nav {
+                display: block;
+                position: fixed;
+                bottom: 14px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: min(92%, 440px);
+                height: 66px;
+                background: var(--white);
+                border-radius: 35px;
+                box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+                border: 1px solid var(--line);
+                z-index: 1000;
+            }
+
+            .mobile-bottom-nav ul {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                list-style: none;
+                position: relative;
+            }
+
+            .mobile-bottom-nav li {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 2;
+                cursor: pointer;
+            }
+
+            .mobile-bottom-nav a {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-decoration: none;
+                color: var(--muted);
+                width: 100%;
+                height: 100%;
+                position: relative;
+            }
+
+            .mobile-bottom-nav .icon {
+                font-size: 1.25rem;
+                transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s;
+                z-index: 3;
+            }
+
+            .mobile-bottom-nav .text {
+                position: absolute;
+                font-size: 0.65rem;
+                font-weight: 800;
+                opacity: 0;
+                transform: translateY(20px);
+                transition: 0.35s ease;
+                color: var(--accent);
+                letter-spacing: 0.3px;
+            }
+
+            .mobile-bottom-nav li.active .icon {
+                transform: translateY(-26px);
+                color: var(--white);
+            }
+
+            .mobile-bottom-nav li.active .text {
+                opacity: 1;
+                transform: translateY(15px);
+            }
+
+            .mobile-bottom-nav .indicator {
+                position: absolute;
+                top: -24px;
+                width: 56px;
+                height: 56px;
+                background: var(--accent);
+                border-radius: 50%;
+                border: 6px solid var(--bg-canvas);
+                box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.35);
+                transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
+                z-index: 1;
+            }
+
+            .mobile-bottom-nav .indicator.pos-0 { left: calc(12.5% - 28px); }
+            .mobile-bottom-nav .indicator.pos-1 { left: calc(37.5% - 28px); }
+            .mobile-bottom-nav .indicator.pos-2 { left: calc(62.5% - 28px); }
+            .mobile-bottom-nav .indicator.pos-3 { left: calc(87.5% - 28px); }
+        }
+
+        /* ===================================================
+           AD UNLOCK / REQUEST CREDIT GATE
+           =================================================== */
+        .credit-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(var(--accent-rgb), 0.08);
+            border: 1.5px solid var(--accent);
+            padding: 13px 16px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-earn-credit {
+            background: #10b981;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-earn-credit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-earn-credit:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- DESKTOP SIDEBAR MENU -->
+<aside class="sidebar" id="main-sidebar">
+    <div class="sidebar-toggle-btn" onclick="toggleSidebarDesktop()" title="Expand / Collapse Menu">
+        <i class="fa-solid fa-chevron-right"></i>
+    </div>
+
+    <div class="sidebar-inner-scroll">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <span class="brand-dot"></span>
+                <span class="brand-text">AIGEN STUDIO</span>
+            </div>
+        </div>
+
+        <ul class="nav-links">
+            <li>
+                <a href="javascript:void(0)" class="active" onclick="switchTab(0)">
+                    <i class="fa-solid fa-video"></i>
+                    <span class="link-text">Request Video</span>
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0)" onclick="switchTab(1)">
+                    <i class="fa-solid fa-images"></i>
+                    <span class="link-text">7-Photo Tutorials</span>
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0)" onclick="switchTab(2)">
+                    <i class="fa-solid fa-code-compare"></i>
+                    <span class="link-text">Comparison</span>
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0)" onclick="switchTab(3)">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span class="link-text">Visitor Stats</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</aside>
+
+<!-- MOBILE FLOATING BOTTOM NAVIGATION -->
+<nav class="mobile-bottom-nav">
+    <ul>
+        <li class="active" onclick="switchTab(0)">
+            <a href="javascript:void(0)">
+                <span class="icon"><i class="fa-solid fa-video"></i></span>
+                <span class="text">Request</span>
+            </a>
+        </li>
+        <li onclick="switchTab(1)">
+            <a href="javascript:void(0)">
+                <span class="icon"><i class="fa-solid fa-images"></i></span>
+                <span class="text">Tutorials</span>
+            </a>
+        </li>
+        <li onclick="switchTab(2)">
+            <a href="javascript:void(0)">
+                <span class="icon"><i class="fa-solid fa-code-compare"></i></span>
+                <span class="text">Compare</span>
+            </a>
+        </li>
+        <li onclick="switchTab(3)">
+            <a href="javascript:void(0)">
+                <span class="icon"><i class="fa-solid fa-chart-simple"></i></span>
+                <span class="text">Stats</span>
+            </a>
+        </li>
+        <div class="indicator pos-0"></div>
+    </ul>
+</nav>
+
+<div class="master-sheet">
+
+    <!-- STICKY TOP HEADER -->
+    <header>
+        <div class="header-left">
+            <div class="header-logo-badge">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+                <div class="brand-name">AI VIDEO TUTORIALS</div>
+                <div style="font-size: 0.65rem; font-weight: 700; color: var(--muted); letter-spacing: 0.8px;">
+                    AIGEN INTERACTIVE STUDIO
+                </div>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="active-tab-pill" id="header-active-section-label">
+                <i class="fa-solid fa-video"></i>
+                <span>Request Video</span>
+            </div>
+
+            <button class="admin-lock-btn" id="header-admin-btn" onclick="toggleAigenModMode()" title="AIGEN Admin Upload Access">
+                <i class="fa-solid fa-lock" id="header-admin-icon"></i>
+                <span id="header-admin-text">AIGEN ADMIN</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ===================================================
+         TAB 0: REQUEST VIDEO + COMPLETED REQUESTED VIDEOS
+         =================================================== -->
+    <div id="tab-sec-0" class="tab-section active-section">
+        <!-- 1. MLBB VIDEO REQUEST SUBMISSION -->
+        <section id="mlbb-request" class="mlbb-request-studio">
+            <div class="request-top-header">
+                <div>
+                    <span class="accent-badge" style="margin-bottom:10px;">
+                        <i class="fa-solid fa-star"></i> TOP PRIORITY • UPLOAD PHOTO, VIDEO, OR BOTH
+                    </span>
+                    <h2 style="font-size:clamp(1.35rem, 3vw, 2rem); font-weight:800;">
+                        MLBB <span style="color:var(--accent);">Video Request</span> Submission
+                    </h2>
+                    <p style="font-size:0.82rem; color:var(--muted); margin-top:4px;">
+                        Write what MLBB video you want in the box below and attach a reference <strong>Photo</strong>, a reference <strong>Video</strong>, or <strong>Both</strong>!
+                    </p>
+                </div>
+            </div>
+
+            <div class="mlbb-split">
+                <div>
+                    <label class="field-label" for="visitor-name">Your Nickname / MLBB ID</label>
+                    <input type="text" id="visitor-name" class="field-input" placeholder="Optional — No Sign-In Required">
+                    
+                    <label class="field-label" for="visitor-textarea">Video Prompt & Motion Details</label>
+                    <textarea id="visitor-textarea" class="field-textarea" placeholder="Write your full MLBB Video Request here... (Example: Animate Chou Dragon Boy doing the spinning kick from my uploaded video with my uploaded photo in Kling AI / Seedance)"></textarea>
+
+                    <div class="upload-duo-grid">
+                        <div class="upload-dropzone">
+                            <input type="file" id="req-photo-input" accept="image/*" onchange="previewRequestMedia('photo')">
+                            <div style="font-size:0.78rem; font-weight:800; color:var(--accent);">
+                                <i class="fa-solid fa-camera"></i> UPLOAD PHOTO
+                            </div>
+                            <div style="font-size:0.68rem; color:var(--muted); margin-top:3px;">Tap to attach hero/skin image</div>
+                            <div class="upload-preview-box" id="req-photo-preview-box">
+                                <img id="req-photo-preview" src="" alt="Uploaded Photo">
+                            </div>
+                        </div>
+
+                        <div class="upload-dropzone">
+                            <input type="file" id="req-video-input" accept="video/*" onchange="previewRequestMedia('video')">
+                            <div style="font-size:0.78rem; font-weight:800; color:var(--accent);">
+                                <i class="fa-solid fa-video"></i> UPLOAD VIDEO
+                            </div>
+                            <div style="font-size:0.68rem; color:var(--muted); margin-top:3px;">Tap to attach motion clip</div>
+                            <div class="upload-preview-box" id="req-video-preview-box">
+                                <video id="req-video-preview" muted loop playsinline controls></video>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AD UNLOCK / CREDIT GATE BAR -->
+                    <div class="credit-bar">
+                        <div>
+                            <span style="font-size:0.78rem; font-weight:800; color:var(--ink);">
+                                <i class="fa-solid fa-coins" style="color:#f59e0b; margin-right:4px;"></i>
+                                Your Request Credits: <span id="user-credits-display" style="color:var(--accent);">0</span>
+                            </span>
+                            <div style="font-size:0.67rem; color:var(--muted); margin-top:2px;">
+                                1 Credit required per MLBB video request (Admin bypasses)
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-earn-credit" id="watch-ad-btn" onclick="startAdUnlock()">
+                            <i class="fa-solid fa-circle-play"></i>
+                            <span id="watch-ad-text">WATCH AD (+1 CREDIT)</span>
+                        </button>
+                    </div>
+
+                    <button class="btn-submit-accent" onclick="submitVisitorRequest()">
+                        <span>SUBMIT REQUEST (MAX 13 TOTAL)</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="req-feed-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:0.73rem; letter-spacing:1.2px; color:var(--accent); font-weight:800;">
+                            <i class="fa-solid fa-list-check"></i> SUBMITTED REQUESTS (<span id="req-count-badge">0</span>/13)
+                        </span>
+                        <span style="font-size:0.68rem; color:var(--muted); font-weight:600;">
+                            You can delete your own requests
+                        </span>
+                    </div>
+                    <div class="req-feed-scroll" id="visitor-requests-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. REQUESTED VIDEOS SHOWCASE (BELOW REQUEST SECTION - ADMIN UPLOAD ONLY) -->
+        <section id="completed-requests-showcase" class="sec-wrap">
+            <div class="sec-head">
+                <div>
+                    <span class="accent-badge" style="margin-bottom:10px;">
+                        <i class="fa-solid fa-film"></i> FINISHED CREATIONS BY AIGEN
+                    </span>
+                    <h2>Completed <span>Requested Videos</span></h2>
+                    <p>Watch the finished AI videos generated from visitor submissions below.</p>
+                </div>
+            </div>
+
+            <!-- ADMIN-ONLY UPLOAD PANEL FOR COMPLETED REQUEST VIDEOS -->
+            <div class="admin-upload-panel admin-only-block">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+                    <strong style="font-size:0.84rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> AIGEN ADMIN: Upload Completed Request Video
+                    </strong>
+                    <span style="font-size:0.7rem; font-weight:700; color:var(--muted);">Only visible to you (AIGEN)</span>
+                </div>
+
+                <div class="mlbb-split" style="margin-top:0; gap:18px;">
+                    <div>
+                        <label class="field-label" for="done-req-user">Requested By / Title</label>
+                        <input type="text" id="done-req-user" class="field-input" placeholder="e.g. Requested by @ChouGod — Dragon Boy Kick">
+
+                        <label class="field-label" for="done-req-notes">AI Model Used / Short Note (Optional)</label>
+                        <input type="text" id="done-req-notes" class="field-input" placeholder="e.g. Generated in Kling AI 1080p">
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; justify-content:space-between;">
+                        <div class="upload-dropzone" style="margin-bottom:12px;">
+                            <input type="file" id="done-req-video-file" accept="video/*" onchange="previewAdminCompletedVideo()">
+                            <div style="font-size:0.78rem; font-weight:800; color:var(--accent);">
+                                <i class="fa-solid fa-file-video"></i> SELECT FINISHED VIDEO FILE
+                            </div>
+                            <div id="done-req-file-name" style="font-size:0.68rem; color:var(--muted); margin-top:4px;">Tap to choose MP4 / WebM video</div>
+                        </div>
+
+                        <button class="btn-submit-accent" onclick="uploadCompletedRequestVideo()">
+                            <i class="fa-solid fa-upload"></i>
+                            <span>PUBLISH REQUESTED VIDEO</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPLETED REQUESTED VIDEOS GALLERY -->
+            <div class="completed-videos-grid" id="completed-videos-container"></div>
+        </section>
+    </div>
+
+    <!-- ===================================================
+         TAB 1: STEP-BY-STEP 7-PHOTO TUTORIALS (ADMIN UPLOAD)
+         =================================================== -->
+    <div id="tab-sec-1" class="tab-section">
+        <section id="tutorials" class="sec-wrap">
+            <div class="sec-head">
+                <div>
+                    <h2>Step-by-Step <span>7-Photo Tutorials</span></h2>
+                    <p><strong>Touch/tap any uploaded tutorial photo to view it centered in Fullscreen!</strong> Use <strong>PREV | 1/7 | NEXT</strong> to browse all 7 steps.</p>
+                </div>
+                <div class="filter-row">
+                    <button class="filter-btn active" onclick="filterTut('all', this)">All 3 Tutorials</button>
+                    <button class="filter-btn" onclick="filterTut(0, this)">DreamActor 2.0</button>
+                    <button class="filter-btn" onclick="filterTut(1, this)">Seedance</button>
+                    <button class="filter-btn" onclick="filterTut(2, this)">Kling AI</button>
+                </div>
+            </div>
+
+            <div class="tutorials-grid" id="tutorials-container"></div>
+        </section>
+    </div>
+
+    <!-- ===================================================
+         TAB 2: SIDE-BY-SIDE VIDEO COMPARISON (ADMIN UPLOAD)
+         =================================================== -->
+    <div id="tab-sec-2" class="tab-section">
+        <section id="comparison" class="sec-wrap">
+            <div class="sec-head">
+                <div>
+                    <h2>Side-by-Side <span>Video Comparison</span></h2>
+                    <p>Compare motion quality, facial sync, and physics across <strong>DreamActor 2.0</strong>, <strong>Seedance</strong> &amp; <strong>Kling AI</strong>.</p>
+                </div>
+                <button class="btn-submit-accent" style="width:auto; padding:11px 22px;" onclick="playAllCompVideos()">
+                    <i class="fa-solid fa-play"></i>
+                    <span>PLAY ALL VIDEOS</span>
+                </button>
+            </div>
+
+            <div class="comp-grid" id="comparison-container"></div>
+        </section>
+    </div>
+
+    <!-- ===================================================
+         TAB 3: VISITOR STATS & LINKS FOOTER
+         =================================================== -->
+    <div id="tab-sec-3" class="tab-section">
+        <footer id="visitor-footer">
+            <h3 style="font-size:1.08rem; font-weight:800; color:var(--accent);">Official AI Platform Links</h3>
+            <p style="font-size:0.79rem; color:var(--muted); margin-top:4px;">
+                Launch Seedance (Dreamina), CapCut (where DreamActor 2.0 is located), or Kling AI directly:
+            </p>
+
+            <div class="footer-btns">
+                <a class="ext-pill accent" href="https://dreamina.capcut.com/" target="_blank" rel="noopener">
+                    <span>Seedance Model (Dreamina)</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+                <a class="ext-pill" href="https://www.capcut.com/" target="_blank" rel="noopener">
+                    <span>CapCut (DreamActor 2.0 Inside)</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a class="ext-pill" href="https://klingai.com/" target="_blank" rel="noopener">
+                    <span>Kling AI Official</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="visitor-stats-panel">
+                <div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                    <strong style="font-size:0.86rem; letter-spacing:0.8px; text-transform:uppercase;">
+                        <i class="fa-solid fa-chart-simple" style="color:var(--accent); margin-right:5px;"></i> Live Website Visitor Counter
+                    </strong>
+                    <span class="pill-accent" style="background:var(--accent); color:#fff; padding:5px 12px; border-radius:50px; font-size:0.68rem; font-weight:800;" id="live-status-pill">
+                        <i class="fa-solid fa-circle" style="font-size: 0.45rem; margin-right: 4px; vertical-align:middle;"></i> Active
+                    </span>
+                </div>
+
+                <div class="visitor-stat-box">
+                    <div style="font-size:0.73rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.8px;">How Many People Visited</div>
+                    <div style="font-size:2.2rem; font-weight:900; color:var(--ink); margin-top:6px;" id="total-visitors-count">1,482</div>
+                    <div style="font-size:0.8rem; color:var(--accent); font-weight:700; margin-top:4px;" id="your-visit-number">Your Device Visits: 1</div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>NO SIGN-IN REQUIRED</span>
+                <span style="color:var(--ink); font-size:0.86rem; font-weight:900; letter-spacing:1.5px; cursor:pointer;" ondblclick="toggleAigenModMode()" title="Double-click to open Admin Moderation">CREATED BY AIGEN</span>
+                <span>EN | <span style="color:var(--accent);">3D</span> | AI</span>
+            </div>
+        </footer>
+    </div>
+
+</div>
+
+<!-- FULLSCREEN PHOTO MODAL -->
+<div class="fs-modal" id="fs-modal" onclick="if(event.target===this || event.target.classList.contains('fs-center-stage')) closeFullscreen()">
+    <div class="fs-top-bar">
+        <div>
+            <strong id="fs-app-title" style="color:var(--accent); font-size:0.95rem; font-weight:800;">Tutorial Photo</strong>
+            <span id="fs-step-counter" style="margin-left:8px; font-size:0.78rem; font-weight:700; color:var(--muted);">1/7</span>
+        </div>
+        <button class="fs-close-btn" onclick="closeFullscreen()">
+            <i class="fa-solid fa-xmark" style="margin-right: 4px;"></i> CLOSE
+        </button>
+    </div>
+
+    <div class="fs-center-stage" id="fs-touch-area">
+        <img id="fs-img" src="" alt="Centered Fullscreen Photo">
+    </div>
+
+    <div class="fs-controls" id="fs-controls-bar">
+        <button class="fs-nav-btn" onclick="fsShift(-1)">
+            <i class="fa-solid fa-arrow-left"></i> PREVIOUS
+        </button>
+        <p id="fs-step-desc" style="font-size:0.83rem; font-weight:700; text-align:center; flex:1; color:var(--ink); line-height:1.45;"></p>
+        <button class="fs-nav-btn" onclick="fsShift(1)">
+            NEXT <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- AIGEN PASSCODE MODAL -->
+<div class="custom-dialog-backdrop" id="aigen-passcode-modal" onclick="if(event.target===this) closePasscodeModal()">
+    <div class="custom-dialog-box">
+        <div style="font-size:0.72rem; font-weight:800; letter-spacing:1.5px; color:var(--accent); text-transform:uppercase;">
+            <i class="fa-solid fa-lock"></i> AIGEN Admin Access
+        </div>
+        <h3 style="margin:8px 0 6px; font-size:1.1rem; font-weight:800;">Unlock Admin Upload Mode</h3>
+        <p style="font-size:0.76rem; color:var(--muted); margin-bottom:16px;">
+            Enter your Admin Passcode (<strong>aigen2026</strong>) to reveal upload &amp; delete buttons for Requested Videos, 7-Step Tutorials, and Video Comparison.
+        </p>
+        <input type="password" id="modal-passcode-input" class="field-input" placeholder="Enter Passcode..." style="text-align:center;" onkeydown="if(event.key==='Enter') confirmPasscodeModal()">
+        <div style="display:flex; gap:10px; margin-top:6px;">
+            <button class="fs-nav-btn" style="flex:1; justify-content:center;" onclick="closePasscodeModal()">Cancel</button>
+            <button class="btn-submit-accent" style="flex:1; padding:11px 16px;" onclick="confirmPasscodeModal()">Unlock Admin</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast-banner" id="aigen-toast">Action completed</div>
+
+<script>
+    // ===================================================
+    // PERSISTENT INDEXEDDB STORAGE ENGINE (FOR PHOTOS & VIDEOS)
+    // ===================================================
+    const DB_NAME = 'AigenStudioMediaDB';
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    function openMediaDB() {
+        return new Promise((resolve, reject) => {
+            if (dbInstance) return resolve(dbInstance);
+            const req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('kv')) {
+                    db.createObjectStore('kv');
+                }
+            };
+            req.onsuccess = (e) => {
+                dbInstance = e.target.result;
+                resolve(dbInstance);
+            };
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function dbSet(key, val) {
+        const db = await openMediaDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('kv', 'readwrite');
+            tx.objectStore('kv').put(val, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function dbGet(key) {
+        const db = await openMediaDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('kv', 'readonly');
+            const req = tx.objectStore('kv').get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function dbDelete(key) {
+        const db = await openMediaDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('kv', 'readwrite');
+            tx.objectStore('kv').delete(key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    // ===================================================
+    // TAB-BASED SECTION SWITCHING
+    // ===================================================
+    const tabMeta = [
+        { label: 'Request Video', icon: 'fa-video' },
+        { label: '7-Photo Tutorials', icon: 'fa-images' },
+        { label: 'Video Comparison', icon: 'fa-code-compare' },
+        { label: 'Visitor Stats', icon: 'fa-chart-simple' }
+    ];
+
+    function toggleSidebarDesktop() {
+        const sidebar = document.getElementById('main-sidebar');
+        sidebar.classList.toggle('expanded');
+        document.body.classList.toggle('sidebar-expanded', sidebar.classList.contains('expanded'));
+    }
+
+    function switchTab(index) {
+        document.querySelectorAll('.tab-section').forEach((sec, i) => {
+            sec.classList.toggle('active-section', i === index);
+        });
+
+        if (index !== 2) {
+            document.querySelectorAll('.cmp-v').forEach(v => v.pause());
+        }
+
+        document.querySelectorAll('.nav-links a').forEach((a, i) => {
+            a.classList.toggle('active', i === index);
+        });
+
+        const indicator = document.querySelector('.mobile-bottom-nav .indicator');
+        if (indicator) {
+            indicator.className = 'indicator pos-' + index;
+        }
+        document.querySelectorAll('.mobile-bottom-nav li').forEach((li, i) => {
+            li.classList.toggle('active', i === index);
+        });
+
+        const headerBadge = document.getElementById('header-active-section-label');
+        if (headerBadge && tabMeta[index]) {
+            headerBadge.innerHTML = `<i class="fa-solid ${tabMeta[index].icon}"></i><span>${tabMeta[index].label}</span>`;
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===================================================
+    // APPLICATION DATA & STATE (NO DEFAULT TUTORIAL IMAGES)
+    // ===================================================
+    let isAigenUnlocked = false;
+    let activeTutFilter = 'all';
+    let myUserId = localStorage.getItem('aigen_user_id');
+    if (!myUserId) {
+        myUserId = 'user_' + Math.random().toString(36).substring(2, 11);
+        localStorage.setItem('aigen_user_id', myUserId);
+    }
+
+    let mlbbRequests = JSON.parse(localStorage.getItem('aigen_mlbb_requests') || '[]');
+    let stagedPhotoDataUrl = '';
+    let stagedVideoUrl = '';
+
+    // All 21 Tutorial Steps start empty (no default pictures)
+    const tutorials = [
+        {
+            title: "Tutorial for DreamActor 2.0",
+            badge: "Not Free (In CapCut)", badgeClass: "pill-dark",
+            note: "Located inside CapCut. DreamActor 2.0 requires an active CapCut Pro subscription.",
+            steps: [
+                { img: "", text: "Step 1/7: Open CapCut, log in to Pro, and open 'AI Tools'." },
+                { img: "", text: "Step 2/7: Tap 'DreamActor 2.0' (Character Motion & Facial Acting)." },
+                { img: "", text: "Step 3/7: Tap 'Upload Character Photo' and select your hero." },
+                { img: "", text: "Step 4/7: Tap 'Upload Driving Video' (5-15s recommended)." },
+                { img: "", text: "Step 5/7: Toggle 'Facial Sync' and select your aspect ratio." },
+                { img: "", text: "Step 6/7: Tap 'Generate (Pro)' and wait for the render." },
+                { img: "", text: "Step 7/7: Preview and tap 'Export 1080p / 60fps'." }
+            ]
+        },
+        {
+            title: "Tutorial for Seedance",
+            badge: "Not Free Also", badgeClass: "pill-dark",
+            note: "Seedance (Dreamina) requires paid credits for high-motion video generation.",
+            steps: [
+                { img: "", text: "Step 1/7: Open Seedance and sign in to access AI Video Generation." },
+                { img: "", text: "Step 2/7: Verify your Paid Credit Balance, then click 'Image to Video'." },
+                { img: "", text: "Step 3/7: Select 'Seedance Pro (High-Motion)' for complex physics." },
+                { img: "", text: "Step 4/7: Click 'Upload First Frame' to attach your artwork." },
+                { img: "", text: "Step 5/7: Enter your action prompt (e.g., 'Chou spinning kick, sparks')." },
+                { img: "", text: "Step 6/7: Set Duration to 5s, Motion to Dynamic, then click Generate." },
+                { img: "", text: "Step 7/7: When complete, click 'Download HD'." }
+            ]
+        },
+        {
+            title: "Tutorial for Kling AI",
+            badge: "Not Free Also", badgeClass: "pill-dark",
+            note: "Kling AI requires paid credits for Professional 1080p and Motion Brush features.",
+            steps: [
+                { img: "", text: "Step 1/7: Visit klingai.com, sign in, and click 'AI Videos'." },
+                { img: "", text: "Step 2/7: Switch to 'Image to Video' and toggle 'Professional Mode'." },
+                { img: "", text: "Step 3/7: Click 'Upload Start Frame' and upload your hero image." },
+                { img: "", text: "Step 4/7: Write a detailed action prompt and negative prompt." },
+                { img: "", text: "Step 5/7: Open 'Motion Brush' and draw arrows for trajectory." },
+                { img: "", text: "Step 6/7: Set Relevance slider to 0.65, choose 5s, and click Generate." },
+                { img: "", text: "Step 7/7: Click the Download icon to export your 1080p clip." }
+            ]
+        }
+    ];
+
+    // Comparison Models (Start empty until Admin uploads comparison videos)
+    const comparisonModels = [
+        {
+            title: "1. DreamActor 2.0",
+            tag: "CapCut Pro",
+            desc: "<strong>Not Free (CapCut).</strong> Best facial expression transfer, eye tracking &amp; lip-sync acting.",
+            videoUrl: ""
+        },
+        {
+            title: "2. Seedance",
+            tag: "Dreamina",
+            desc: "<strong>Not Free Also.</strong> Ultra-smooth martial arts choreography &amp; fast dynamic combat.",
+            videoUrl: ""
+        },
+        {
+            title: "3. Kling AI",
+            tag: "Kling Pro",
+            desc: "<strong>Not Free Also.</strong> Realistic 3D physics, weapon trajectory &amp; Motion Brush control.",
+            videoUrl: ""
+        }
+    ];
+
+    // Completed Requested Videos List
+    let completedVideosList = [];
+
+    function showToast(msg) {
+        const toast = document.getElementById('aigen-toast');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    function escapeHTML(str) {
+        return String(str).replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+    }
+
+    // ===================================================
+    // ADMIN AUTHENTICATION (UNLOCKS ALL UPLOAD/DELETE UI)
+    // ===================================================
+    function toggleAigenModMode() {
+        if (isAigenUnlocked) {
+            isAigenUnlocked = false;
+            document.body.classList.remove('aigen-admin-unlocked');
+            document.getElementById('header-admin-icon').className = 'fa-solid fa-lock';
+            document.getElementById('header-admin-text').innerText = 'AIGEN ADMIN';
+            renderVisitorRequests();
+            renderCompletedRequestVideos();
+            renderTutorials(activeTutFilter);
+            renderComparisonSection();
+            showToast("Admin Mode Locked.");
+            return;
+        }
+        document.getElementById('aigen-passcode-modal').classList.add('open');
+        document.getElementById('modal-passcode-input').focus();
+    }
+
+    function closePasscodeModal() {
+        document.getElementById('aigen-passcode-modal').classList.remove('open');
+        document.getElementById('modal-passcode-input').value = '';
+    }
+
+    function confirmPasscodeModal() {
+        const pass = document.getElementById('modal-passcode-input').value;
+        if (pass === 'aigen2026') {
+            isAigenUnlocked = true;
+            document.body.classList.add('aigen-admin-unlocked');
+            document.getElementById('header-admin-icon').className = 'fa-solid fa-lock-open';
+            document.getElementById('header-admin-text').innerText = 'ADMIN UNLOCKED';
+            closePasscodeModal();
+            showToast("AIGEN Admin Mode Unlocked! All upload & delete buttons are now active.");
+            renderVisitorRequests();
+            renderCompletedRequestVideos();
+            renderTutorials(activeTutFilter);
+            renderComparisonSection();
+        } else {
+            showToast("Incorrect Passcode!");
+        }
+    }
+
+    // ===================================================
+    // 1. VISITOR REQUESTS SUBMISSION & FEED
+    // ===================================================
+    function previewRequestMedia(type) {
+        const input = document.getElementById(`req-${type}-input`);
+        const file = input.files[0];
+        if (!file) return;
+
+        if (type === 'photo') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                stagedPhotoDataUrl = e.target.result;
+                document.getElementById('req-photo-preview').src = stagedPhotoDataUrl;
+                document.getElementById('req-photo-preview-box').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            stagedVideoUrl = URL.createObjectURL(file);
+            document.getElementById('req-video-preview').src = stagedVideoUrl;
+            document.getElementById('req-video-preview-box').style.display = 'block';
+        }
+    }
+
+    function submitVisitorRequest() {
+        if (mlbbRequests.length >= 13) {
+            showToast("Limit Reached! Max 13 requests allowed total.");
+            return;
+        }
+
+        const name = (document.getElementById('visitor-name').value || 'Anonymous Player').trim();
+        const text = document.getElementById('visitor-textarea').value.trim();
+        
+        if (!text) { 
+            showToast("Please write your MLBB video request first."); 
+            return; 
+        }
+
+        if (userCredits <= 0 && !isAigenUnlocked) {
+            showToast("You need 1 Credit! Click 'WATCH AD (+1 CREDIT)' first.");
+            return;
+        }
+
+        const newReq = {
+            id: Date.now().toString(),
+            authorId: myUserId,
+            name: name,
+            text: text,
+            photo: stagedPhotoDataUrl,
+            video: stagedVideoUrl,
+            date: new Date().toLocaleDateString()
+        };
+
+        mlbbRequests.unshift(newReq);
+        try {
+            localStorage.setItem('aigen_mlbb_requests', JSON.stringify(mlbbRequests));
+        } catch (err) {
+            newReq.photo = '';
+            localStorage.setItem('aigen_mlbb_requests', JSON.stringify(mlbbRequests));
+        }
+
+        document.getElementById('visitor-textarea').value = '';
+        document.getElementById('visitor-name').value = '';
+        document.getElementById('req-photo-preview-box').style.display = 'none';
+        document.getElementById('req-video-preview-box').style.display = 'none';
+        document.getElementById('req-photo-input').value = '';
+        document.getElementById('req-video-input').value = '';
+        stagedPhotoDataUrl = '';
+        stagedVideoUrl = '';
+
+        if (!isAigenUnlocked) {
+            userCredits = Math.max(0, userCredits - 1);
+            localStorage.setItem('aigen_user_credits', userCredits);
+            updateCreditUI();
+        }
+
+        showToast("Request submitted successfully! (-1 Credit)");
+        renderVisitorRequests();
+    }
+
+    function renderVisitorRequests() {
+        document.getElementById('req-count-badge').innerText = mlbbRequests.length;
+        const list = document.getElementById('visitor-requests-list');
+        list.innerHTML = '';
+
+        if (mlbbRequests.length === 0) {
+            list.innerHTML = `
+                <div style="text-align:center; padding: 36px 16px; color:var(--muted);">
+                    <i class="fa-solid fa-film" style="font-size:1.6rem; color:var(--accent); opacity:0.6; margin-bottom:8px;"></i>
+                    <p style="font-size:0.8rem; font-weight:700;">No requests submitted yet.</p>
+                    <p style="font-size:0.7rem; margin-top:4px;">Be the first to submit an MLBB hero animation request!</p>
+                </div>`;
+            return;
+        }
+
+        mlbbRequests.forEach(req => {
+            const canDelete = isAigenUnlocked || req.authorId === myUserId;
+            const delBtnHTML = canDelete
+                ? `<button class="btn-remove-aigen" onclick="deleteRequest('${req.id}')"><i class="fa-solid fa-trash-can"></i> Remove</button>`
+                : '';
+
+            let mediaHtml = '<div class="req-media-attachments">';
+            if (req.photo) mediaHtml += `<img src="${req.photo}" alt="Attached Hero" onclick="openDirectFullscreen('${req.photo}', 'Request Photo')">`;
+            if (req.video) mediaHtml += `<video src="${req.video}" controls playsinline></video>`;
+            mediaHtml += '</div>';
+
+            list.innerHTML += `
+                <div class="req-card-item">
+                    <div class="req-card-top">
+                        <strong style="color:var(--accent); font-size:0.84rem;"><i class="fa-solid fa-user-astronaut" style="margin-right:5px;"></i>${escapeHTML(req.name)}</strong>
+                        <span style="font-size:0.66rem; font-weight:700; color:var(--muted);">${escapeHTML(req.date)}</span>
+                    </div>
+                    <p style="font-size:0.79rem; margin-top:8px; line-height:1.48; color:var(--ink);">${escapeHTML(req.text)}</p>
+                    ${req.photo || req.video ? mediaHtml : ''}
+                    <div class="req-card-actions">
+                        <span style="font-size:0.65rem; font-weight:700; color:var(--muted);">ID #${req.id.slice(-4)}</span>
+                        ${delBtnHTML}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function deleteRequest(id) {
+        mlbbRequests = mlbbRequests.filter(r => r.id !== id);
+        localStorage.setItem('aigen_mlbb_requests', JSON.stringify(mlbbRequests));
+        renderVisitorRequests();
+        showToast("Request removed.");
+    }
+
+    // ===================================================
+    // 2. COMPLETED REQUESTED VIDEOS (ADMIN UPLOAD & DELETE)
+    // ===================================================
+    function previewAdminCompletedVideo() {
+        const fileInput = document.getElementById('done-req-video-file');
+        const label = document.getElementById('done-req-file-name');
+        if (fileInput.files && fileInput.files[0]) {
+            label.innerText = "Selected: " + fileInput.files[0].name;
+            label.style.color = "var(--accent)";
+            label.style.fontWeight = "700";
+        }
+    }
+
+    async function uploadCompletedRequestVideo() {
+        if (!isAigenUnlocked) {
+            showToast("Admin access required!");
+            return;
+        }
+
+        const titleInput = document.getElementById('done-req-user');
+        const notesInput = document.getElementById('done-req-notes');
+        const fileInput = document.getElementById('done-req-video-file');
+
+        const title = (titleInput.value || 'Completed MLBB Request').trim();
+        const notes = (notesInput.value || 'Generated by AIGEN').trim();
+        const file = fileInput.files[0];
+
+        if (!file) {
+            showToast("Please select a finished video file first.");
+            return;
+        }
+
+        const item = {
+            id: 'done_' + Date.now(),
+            title: title,
+            notes: notes,
+            date: new Date().toLocaleDateString(),
+            videoBlob: file
+        };
+
+        completedVideosList.unshift(item);
+        await dbSet('completed_request_videos', completedVideosList);
+
+        titleInput.value = '';
+        notesInput.value = '';
+        fileInput.value = '';
+        document.getElementById('done-req-file-name').innerText = 'Tap to choose MP4 / WebM video';
+        document.getElementById('done-req-file-name').style.color = 'var(--muted)';
+
+        renderCompletedRequestVideos();
+        showToast("Completed Request Video uploaded!");
+    }
+
+    async function deleteCompletedRequestVideo(id) {
+        if (!isAigenUnlocked) return;
+        completedVideosList = completedVideosList.filter(item => item.id !== id);
+        await dbSet('completed_request_videos', completedVideosList);
+        renderCompletedRequestVideos();
+        showToast("Completed video deleted.");
+    }
+
+    function renderCompletedRequestVideos() {
+        const container = document.getElementById('completed-videos-container');
+        container.innerHTML = '';
+
+        if (!completedVideosList || completedVideosList.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align:center; padding: 38px 20px; background:var(--charcoal-deep); border:1.5px dashed var(--line); border-radius:20px; color:var(--muted);">
+                    <i class="fa-solid fa-clapperboard" style="font-size:2rem; color:var(--accent); opacity:0.65; margin-bottom:10px;"></i>
+                    <p style="font-size:0.86rem; font-weight:800; color:var(--ink);">No Completed Request Videos Uploaded Yet</p>
+                    <p style="font-size:0.75rem; margin-top:4px;">When AIGEN finishes rendering a visitor's MLBB request, the video will be posted right here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        completedVideosList.forEach(item => {
+            const videoSrc = item.videoBlob instanceof Blob ? URL.createObjectURL(item.videoBlob) : (item.videoUrl || '');
+            const adminDeleteBtn = isAigenUnlocked
+                ? `<button class="btn-remove-aigen" onclick="deleteCompletedRequestVideo('${item.id}')"><i class="fa-solid fa-trash-can"></i> Delete Video</button>`
+                : '';
+
+            container.innerHTML += `
+                <div class="completed-video-card">
+                    <video src="${videoSrc}" controls playsinline loop preload="metadata"></video>
+                    <div class="completed-video-body">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                            <h4 style="font-size:0.9rem; font-weight:800; color:var(--ink);">${escapeHTML(item.title)}</h4>
+                            <span style="font-size:0.65rem; font-weight:700; color:var(--muted); white-space:nowrap;">${escapeHTML(item.date)}</span>
+                        </div>
+                        <p style="font-size:0.75rem; color:var(--accent); font-weight:700;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px;"></i>${escapeHTML(item.notes)}
+                        </p>
+                        ${adminDeleteBtn ? `<div style="margin-top:auto; padding-top:10px; border-top:1px solid var(--line); display:flex; justify-content:flex-end;">${adminDeleteBtn}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // ===================================================
+    // 3. 7-STEP TUTORIALS (ADMIN PHOTO UPLOAD & DELETE PER STEP)
+    // ===================================================
+    const currentPhotoIdx = [0, 0, 0];
+    let activeFsTutorial = 0;
+
+    async function handleTutorialStepUpload(tIdx, sIdx, inputEl) {
+        if (!isAigenUnlocked) return;
+        const file = inputEl.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const dataUrl = e.target.result;
+            tutorials[tIdx].steps[sIdx].img = dataUrl;
+            await dbSet(`tut_${tIdx}_step_${sIdx}`, dataUrl);
+            renderTutorials(activeTutFilter);
+            showToast(`Uploaded Step ${sIdx + 1}/7 photo for ${tutorials[tIdx].title}!`);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function deleteTutorialStepPhoto(tIdx, sIdx) {
+        if (!isAigenUnlocked) return;
+        tutorials[tIdx].steps[sIdx].img = "";
+        await dbDelete(`tut_${tIdx}_step_${sIdx}`);
+        renderTutorials(activeTutFilter);
+        showToast(`Deleted Step ${sIdx + 1}/7 photo.`);
+    }
+
+    function renderTutorials(filter = 'all') {
+        activeTutFilter = filter;
+        const box = document.getElementById('tutorials-container');
+        box.innerHTML = '';
+
+        tutorials.forEach((t, tIdx) => {
+            if (filter !== 'all' && filter !== tIdx) return;
+            const sIdx = currentPhotoIdx[tIdx];
+            const currentStepObj = t.steps[sIdx];
+            const hasPhoto = Boolean(currentStepObj.img);
+            const progressPct = ((sIdx + 1) / 7) * 100;
+
+            let thumbs = '';
+            t.steps.forEach((st, i) => {
+                const stepHasImg = Boolean(st.img);
+                thumbs += `
+                    <div class="thumb-item ${i === sIdx ? 'active' : ''} ${stepHasImg ? 'has-photo' : ''}" id="th-${tIdx}-${i}" onclick="selectStep(${tIdx}, ${i})">
+                        ${stepHasImg ? `<img id="th-img-${tIdx}-${i}" src="${st.img}" alt="Step ${i+1}">` : ''}
+                        <span>${i+1}</span>
+                    </div>
+                `;
+            });
+
+            const mainVisualHTML = hasPhoto
+                ? `<span class="fullscreen-hint"><i class="fa-solid fa-expand"></i> FULLSCREEN</span>
+                   <img id="main-photo-${tIdx}" src="${currentStepObj.img}" alt="${t.title}">`
+                : `<div class="empty-media-placeholder">
+                       <i class="fa-regular fa-image"></i>
+                       <strong style="font-size:0.8rem; color:#e2e8f0;">Step ${sIdx + 1}/7 Photo Not Uploaded Yet</strong>
+                       <span style="font-size:0.68rem;">${isAigenUnlocked ? 'Use the Admin Upload button below to add this step photo' : 'AIGEN Admin will upload this step screenshot soon'}</span>
+                   </div>`;
+
+            const adminStepControlsHTML = `
+                <div class="tut-admin-bar admin-only-flex">
+                    <label class="btn-admin-upload">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>${hasPhoto ? `Replace Step ${sIdx + 1}/7 Photo` : `Upload Step ${sIdx + 1}/7 Photo`}</span>
+                        <input type="file" accept="image/*" onchange="handleTutorialStepUpload(${tIdx}, ${sIdx}, this)">
+                    </label>
+                    ${hasPhoto ? `
+                        <button class="btn-remove-aigen" onclick="deleteTutorialStepPhoto(${tIdx}, ${sIdx})">
+                            <i class="fa-solid fa-trash-can"></i> Delete Step ${sIdx + 1}
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            box.innerHTML += `
+                <article class="tut-card">
+                    <div class="tut-photo-box" onclick="handleTutorialPhotoClick(${tIdx})">
+                        ${mainVisualHTML}
+                        <div class="tut-photo-overlay">
+                            <span class="${t.badgeClass}" style="width:fit-content; padding: 5px 11px; border-radius:50px; font-size: 0.65rem; font-weight:800;">${t.badge}</span>
+                            <h3 style="font-size:1.1rem; font-weight:800; margin-top:5px;">${t.title}</h3>
+                        </div>
+                    </div>
+
+                    <div class="step-progress-track">
+                        <div class="step-progress-fill" id="prog-${tIdx}" style="width:${progressPct}%"></div>
+                    </div>
+
+                    <div class="slider-nav-bar">
+                        <button onclick="stepDelta(${tIdx}, -1)"><i class="fa-solid fa-arrow-left"></i> PREV</button>
+                        <span id="count-${tIdx}">STEP ${sIdx + 1} / 7</span>
+                        <button onclick="stepDelta(${tIdx}, 1)">NEXT <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+
+                    ${adminStepControlsHTML}
+
+                    <div class="tut-body">
+                        <div>
+                            <div class="step-callout-box">
+                                <p id="desc-${tIdx}" style="font-size:0.81rem; font-weight:700; line-height:1.48; color:var(--ink);">
+                                    ${currentStepObj.text}
+                                </p>
+                            </div>
+                            <p style="font-size:0.73rem; color:var(--muted); margin-top:10px; line-height:1.4;">
+                                <i class="fa-solid fa-circle-info" style="color:var(--accent); margin-right:4px;"></i>${t.note}
+                            </p>
+                        </div>
+                        <div class="thumbs-7">${thumbs}</div>
+                    </div>
+                </article>
+            `;
+        });
+    }
+
+    function selectStep(tIdx, pIdx) {
+        currentPhotoIdx[tIdx] = pIdx;
+        renderTutorials(activeTutFilter);
+    }
+
+    function stepDelta(tIdx, dir) {
+        const next = (currentPhotoIdx[tIdx] + dir + 7) % 7;
+        selectStep(tIdx, next);
+    }
+
+    function filterTut(val, btn) {
+        document.querySelectorAll('.filter-row .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTutorials(val);
+    }
+
+    function handleTutorialPhotoClick(tIdx) {
+        const pIdx = currentPhotoIdx[tIdx];
+        if (!tutorials[tIdx].steps[pIdx].img) {
+            showToast(`No photo uploaded for Step ${pIdx + 1}/7 yet.`);
+            return;
+        }
+        openFullscreen(tIdx);
+    }
+
+    // ===================================================
+    // 4. VIDEO COMPARISON (ADMIN UPLOAD & DELETE PER MODEL)
+    // ===================================================
+    async function handleComparisonVideoUpload(cIdx, inputEl) {
+        if (!isAigenUnlocked) return;
+        const file = inputEl.files[0];
+        if (!file) return;
+
+        await dbSet(`comp_video_${cIdx}`, file);
+        comparisonModels[cIdx].videoUrl = URL.createObjectURL(file);
+        renderComparisonSection();
+        showToast(`Uploaded comparison video for ${comparisonModels[cIdx].title}!`);
+    }
+
+    async function deleteComparisonVideo(cIdx) {
+        if (!isAigenUnlocked) return;
+        await dbDelete(`comp_video_${cIdx}`);
+        comparisonModels[cIdx].videoUrl = "";
+        renderComparisonSection();
+        showToast(`Deleted video for ${comparisonModels[cIdx].title}.`);
+    }
+
+    function renderComparisonSection() {
+        const box = document.getElementById('comparison-container');
+        box.innerHTML = '';
+
+        comparisonModels.forEach((m, cIdx) => {
+            const hasVideo = Boolean(m.videoUrl);
+
+            const stageHTML = hasVideo
+                ? `<video class="cmp-v" src="${m.videoUrl}" loop muted playsinline controls></video>`
+                : `<div class="empty-media-placeholder">
+                       <i class="fa-solid fa-film"></i>
+                       <strong style="font-size:0.8rem; color:#e2e8f0;">No Comparison Video Uploaded</strong>
+                       <span style="font-size:0.68rem;">${isAigenUnlocked ? 'Use the Admin button below to upload this comparison clip' : 'AIGEN Admin will upload this comparison video soon'}</span>
+                   </div>`;
+
+            const adminControlsHTML = `
+                <div class="admin-only-flex" style="padding-top:10px; border-top:1px dashed var(--line); justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <label class="btn-admin-upload">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>${hasVideo ? 'Replace Video' : 'Upload Video'}</span>
+                        <input type="file" accept="video/*" onchange="handleComparisonVideoUpload(${cIdx}, this)">
+                    </label>
+                    ${hasVideo ? `
+                        <button class="btn-remove-aigen" onclick="deleteComparisonVideo(${cIdx})">
+                            <i class="fa-solid fa-trash-can"></i> Delete
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            box.innerHTML += `
+                <div class="comp-tile">
+                    <div class="comp-video-stage">
+                        ${stageHTML}
+                    </div>
+                    <div class="comp-tile-body">
+                        <div>
+                            <div class="comp-tile-top">
+                                <h4>${m.title}</h4>
+                                <span style="font-size:0.65rem; font-weight:800; padding:3px 9px; border-radius:30px; background:var(--charcoal-deep); border:1px solid var(--line); color:var(--muted);">${m.tag}</span>
+                            </div>
+                            <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                            <p style="font-size:0.75rem; color:var(--muted); line-height:1.45;">${m.desc}</p>
+                        </div>
+                        ${adminControlsHTML}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function playAllCompVideos() {
+        let playedCount = 0;
+        document.querySelectorAll('.cmp-v').forEach(v => {
+            v.currentTime = 0;
+            v.play();
+            playedCount++;
+        });
+        if (playedCount === 0) {
+            showToast("No comparison videos uploaded yet.");
+        }
+    }
+
+    // ===================================================
+    // FULLSCREEN MODAL VIEWER
+    // ===================================================
+    function openFullscreen(tIdx) {
+        activeFsTutorial = tIdx;
+        document.getElementById('fs-controls-bar').style.display = 'flex';
+        updateFullscreenModal();
+        document.getElementById('fs-modal').classList.add('open');
+        document.body.classList.add('lock-scroll');
+    }
+
+    function updateFullscreenModal() {
+        const pIdx = currentPhotoIdx[activeFsTutorial];
+        const tut = tutorials[activeFsTutorial];
+        const stepObj = tut.steps[pIdx];
+        document.getElementById('fs-app-title').innerText = tut.title;
+        document.getElementById('fs-step-counter').innerText = `Photo ${pIdx + 1} of 7`;
+        document.getElementById('fs-img').src = stepObj.img || '';
+        document.getElementById('fs-step-desc').innerText = stepObj.text;
+    }
+
+    function fsShift(dir) {
+        stepDelta(activeFsTutorial, dir);
+        updateFullscreenModal();
+    }
+
+    function openDirectFullscreen(imgUrl, label) {
+        document.getElementById('fs-app-title').innerText = label;
+        document.getElementById('fs-step-counter').innerText = '';
+        document.getElementById('fs-img').src = imgUrl;
+        document.getElementById('fs-controls-bar').style.display = 'none';
+        document.getElementById('fs-modal').classList.add('open');
+        document.body.classList.add('lock-scroll');
+    }
+
+    function closeFullscreen() {
+        document.getElementById('fs-modal').classList.remove('open');
+        document.body.classList.remove('lock-scroll');
+    }
+
+    window.addEventListener('keydown', e => {
+        const modalOpen = document.getElementById('fs-modal').classList.contains('open');
+        if (!modalOpen) return;
+        if (e.key === 'Escape') closeFullscreen();
+        if (document.getElementById('fs-controls-bar').style.display !== 'none') {
+            if (e.key === 'ArrowRight') fsShift(1);
+            if (e.key === 'ArrowLeft') fsShift(-1);
+        }
+    });
+
+    let touchStartX = 0;
+    const fsTouchArea = document.getElementById('fs-touch-area');
+    fsTouchArea.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    fsTouchArea.addEventListener('touchend', e => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 45 && document.getElementById('fs-controls-bar').style.display !== 'none') {
+            fsShift(diff < 0 ? 1 : -1);
+        }
+    }, { passive: true });
+
+    // ===================================================
+    // VISITOR COUNTER & INITIAL DATA RESTORE
+    // ===================================================
+    function initVisitorTracker() {
+        const baseVisitors = 1480;
+        let deviceVisits = parseInt(localStorage.getItem('aigen_device_visits') || '0', 10) + 1;
+        localStorage.setItem('aigen_device_visits', deviceVisits);
+
+        const totalVisitors = baseVisitors + deviceVisits;
+        document.getElementById('total-visitors-count').innerText = totalVisitors.toLocaleString() + " Visitors";
+        document.getElementById('your-visit-number').innerText = `Your Visits: #${deviceVisits}`;
+    }
+
+    async function loadAllSavedAdminMedia() {
+        try {
+            // 1. Restore Completed Request Videos
+            const savedDoneVideos = await dbGet('completed_request_videos');
+            if (Array.isArray(savedDoneVideos)) {
+                completedVideosList = savedDoneVideos;
+            }
+
+            // 2. Restore 21 Tutorial Step Photos
+            for (let t = 0; t < 3; t++) {
+                for (let s = 0; s < 7; s++) {
+                    const savedImg = await dbGet(`tut_${t}_step_${s}`);
+                    if (savedImg) {
+                        tutorials[t].steps[s].img = savedImg;
+                    }
+                }
+            }
+
+            // 3. Restore 3 Comparison Videos
+            for (let c = 0; c < 3; c++) {
+                const savedBlob = await dbGet(`comp_video_${c}`);
+                if (savedBlob instanceof Blob) {
+                    comparisonModels[c].videoUrl = URL.createObjectURL(savedBlob);
+                }
+            }
+        } catch (err) {
+            console.warn("Media DB restore notice:", err);
+        }
+
+        renderCompletedRequestVideos();
+        renderTutorials('all');
+        renderComparisonSection();
+    }
+
+    // ===================================================
+    // 5. AD UNLOCK / REQUEST CREDIT SYSTEM (DIRECT LINK)
+    // ===================================================
+    // Replace the URL below with your Adsterra or Monetag Direct Link
+    const AD_DIRECT_LINK = "https://YOUR_ADSTERRA_OR_MONETAG_DIRECT_LINK";
+    const AD_WAIT_SECONDS = 12;
+
+    let userCredits = parseInt(localStorage.getItem('aigen_user_credits') || '0', 10);
+    let adTimerRunning = false;
+
+    function updateCreditUI() {
+        const el = document.getElementById('user-credits-display');
+        if (el) el.innerText = userCredits;
+    }
+
+    function startAdUnlock() {
+        if (adTimerRunning) return;
+
+        // 1. Open Sponsor / Ad Direct Link in a new tab
+        window.open(AD_DIRECT_LINK, '_blank', 'noopener');
+
+        // 2. Start countdown timer on the button
+        adTimerRunning = true;
+        const btn = document.getElementById('watch-ad-btn');
+        const txt = document.getElementById('watch-ad-text');
+        btn.disabled = true;
+
+        let timeLeft = AD_WAIT_SECONDS;
+        txt.innerText = `VERIFYING AD (${timeLeft}s)...`;
+
+        const interval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                txt.innerText = `VERIFYING AD (${timeLeft}s)...`;
+            } else {
+                clearInterval(interval);
+                adTimerRunning = false;
+                btn.disabled = false;
+                txt.innerText = "WATCH AD (+1 CREDIT)";
+
+                // 3. Reward +1 Credit to the user
+                userCredits += 1;
+                localStorage.setItem('aigen_user_credits', userCredits);
+                updateCreditUI();
+                showToast("Thank you! +1 Request Credit unlocked!");
+            }
+        }, 1000);
+    }
+
+    // Startup Initialization
+    updateCreditUI();
+    renderVisitorRequests();
+    initVisitorTracker();
+    loadAllSavedAdminMedia();
+</script>
+
+</body>
+</html>
